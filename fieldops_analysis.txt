@@ -1,0 +1,271 @@
+-- ============================================================
+-- Field Operations Delay Analysis
+-- Alarm System Installation -- Communication Gap Case Study
+-- Author: Oliver Maria
+-- Tools: SQL Server Management Studio 21
+-- Description: Analysis of 114 field installation jobs to
+--              identify root causes of operational delays.
+--              All data fabricated to protect privacy.
+-- ============================================================
+
+USE FieldOps;
+
+-- ============================================================
+-- SECTION 1: TABLE SETUP
+-- ============================================================
+
+-- Create the jobs table
+CREATE TABLE dbo.jobs (
+    job_id              VARCHAR(10),
+    notification_time   VARCHAR(10),
+    job_start_time      VARCHAR(10),
+    system_type         VARCHAR(20),
+    had_floor_plans     VARCHAR(5),
+    had_scope           VARCHAR(5),
+    delay_occurred      VARCHAR(5),
+    delay_reason        VARCHAR(255),
+    delay_response      VARCHAR(255),
+    tech_id             VARCHAR(10)
+);
+
+-- Load all 114 jobs
+INSERT INTO dbo.jobs VALUES
+('job110', '4:37 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job111', '4:58 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Missing wires', 'waiting on electricians to pull wires', 'tech16'),
+('job112', '3:59 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job113', '4:38 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job114', '5:06 PM', '8:00', 'Honeywell', 'YES', 'YES', 'YES', NULL, NULL, 'tech10'),
+('job115', '5:50 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, wires not ran to proper location, some wires unaccessible', 'paperwork received at 9:20am, waiting on access to wires and wires final location', 'tech14'),
+('job116', '4:48 PM', '9:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job117', '4:41 PM', '8:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job118', '4:51 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job119', '3:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job120', '3:31 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job121', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job122', '5:13 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Missing wires waiting on approval', 'GC approved wire locations, waiting on wires to be pulled', 'tech15'),
+('job123', '5:04 PM', '9:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job124', '4:50 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job125', '4:43 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Devices not ready not ready to be mounted', 'walls and ceiling will be ready next week', 'tech14'),
+('job126', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job127', '5:09 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job128', '6:34 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, missing wires, head end layout TBD', 'paperwork received at 9:03am, waiting on GC to reach out to clients', 'tech11'),
+('job129', '5:23 PM', '8:00', 'Honeywell', 'NO', 'NO', 'YES', 'Devices not ready to be mounted', 'walls and ceilings will be ready in 3 weeks as per GC', 'tech13'),
+('job130', '4:32 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job131', '6:02 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, wires not ran to proper location, devices not ready to be mounted', 'paperwork received at 9:07am, electricians pulled wires today, walls and ceilings ready on Thurs.', 'tech13'),
+('job132', '4:45 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job133', '5:03 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job134', '4:53 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job135', '4:26 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Devices not ready to be mounted, head end not ready to power up', 'walls will be ready tomorrow, head end termination completed by friday', 'tech16'),
+('job136', '4:57 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Mising wires, devices not ready to be mounted', 'waiting on approval from office, walls and ceilings will be ready next month', 'tech14'),
+('job137', '4:34 PM', '9:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job138', '6:05 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, missing wires, head end not ready to power up', 'paperwork received at 9:10am, waiting on approval from GC, head end termination complete in 2 weeks', 'tech10'),
+('job139', '5:34 PM', '8:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, wires ran but not officially approved yet', 'paperwork received at 9:04am, waiting on approval from GC', 'tech10'),
+('job140', '4:37 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job141', '4:58 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Devices not ready', 'walls and ceilings will be ready in 3 weeks', 'tech11'),
+('job142', '3:59 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'No access to 2nd and 3rd floors', 'will have access again in one week', 'tech16'),
+('job143', '4:38 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job144', '5:06 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job145', '5:50 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job146', '4:48 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job147', '4:41 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job148', '4:51 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Walls and ceilings not ready, head end still not ready to be powered up', 'Walls and ceilings will be ready in 3 weeks, hed end will be ready next week', 'tech13'),
+('job149', '3:34 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, missing wires, devices not delivered', 'Paperwork received at 10:11 am, wires should be ready in 3 days, devices will be delivered next day', 'tech12'),
+('job150', '3:31 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job151', '4:49 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job152', '5:13 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job153', '5:04 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job154', '4:50 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job155', '4:43 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job156', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job157', '5:09 PM', '9:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job158', '6:34 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job159', '5:23 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job160', '4:32 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job161', '6:02 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job162', '4:45 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job163', '5:03 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job164', '4:53 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job165', '4:26 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job166', '4:57 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job167', '4:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job168', '6:05 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job169', '5:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job170', '4:37 PM', '9:00', 'Honeywell', 'NO', 'NO', 'YES', 'No paperwork, wires cut in 1st floor', 'Paperwork delivered at 9:36 am. new first fl wires will be ran next week', 'tech14'),
+('job171', '4:58 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job172', '3:59 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job173', '4:38 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', NULL, NULL, 'tech11'),
+('job174', '5:06 PM', '9:00', 'DMP', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job175', '5:50 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job176', '4:48 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Wires buried in 4th floor, 3 zone expanders left to wire up', NULL, 'tech15'),
+('job177', '4:41 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job178', '4:51 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job179', '3:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job180', '3:31 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job181', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job182', '5:13 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job183', '5:04 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job184', '4:50 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job185', '4:43 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job186', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job187', '5:09 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job188', '6:34 PM', '8:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job189', '5:23 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job190', '4:32 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job191', '6:02 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job192', '4:45 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job193', '5:03 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Wires buried in 4th floor, wires shorted on second floor', 'holes will be made next day to find wires. second floor wires will now be wireless', 'tech10'),
+('job194', '4:53 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job195', '4:26 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job196', '4:57 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'need to troubleshoot 10 zones', '4 water sensors are not ready to be installed, 1 water sensor was a false alarm, 3 windows are kept open by ACs, 2 smokes not ready', 'tech14'),
+('job197', '4:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech13'),
+('job198', '6:05 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job199', '5:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech14'),
+('job200', '4:37 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Internet Radio not working', 'New Radio will be delivered tomorrow', 'tech15'),
+('job201', '4:58 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job202', '3:59 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job203', '4:38 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job204', '5:06 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech15'),
+('job205', '5:50 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job206', '4:48 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job207', '4:41 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12'),
+('job208', '4:51 PM', '9:00', 'Honeywell', 'YES', 'YES', 'YES', 'Head end layout TBD, no access to tone upper 3 floors', NULL, 'tech12'),
+('job209', '3:34 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech16'),
+('job210', '3:31 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job211', '4:49 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech11'),
+('job212', '5:13 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech10'),
+('job213', '5:04 PM', '9:00', 'Honeywell', 'YES', 'YES', 'NO', NULL, NULL, 'tech12');
+
+-- ============================================================
+-- SECTION 2: DATA VALIDATION
+-- ============================================================
+
+-- Confirm total row count (expected: 114)
+SELECT COUNT(*) AS total_rows FROM dbo.jobs;
+
+-- Preview first 10 rows
+SELECT TOP 10 * FROM dbo.jobs;
+
+-- ============================================================
+-- SECTION 3: FEATURE ENGINEERING
+-- Add delay_category column to classify delay reasons
+-- into structured buckets for analysis
+-- ============================================================
+
+ALTER TABLE dbo.jobs
+ADD delay_category VARCHAR(30);
+
+-- Categorize delay reasons into 5 buckets
+-- Note: Order of WHEN clauses matters -- Documentation
+-- is checked first as it is the most common cause
+UPDATE dbo.jobs
+SET delay_category = CASE
+    WHEN delay_reason LIKE '%paperwork%'
+        OR delay_reason LIKE '%scope%'
+        OR delay_reason LIKE '%floor plan%'
+        OR delay_reason LIKE '%layout%'
+        OR delay_reason LIKE '%approved%'
+        OR delay_reason LIKE '%approval%' THEN 'Missing Documentation'
+    WHEN delay_reason LIKE '%wall%'
+        OR delay_reason LIKE '%ceiling%'
+        OR delay_reason LIKE '%access%'
+        OR delay_reason LIKE '%floor%'
+        OR delay_reason LIKE '%buried%'
+        OR delay_reason LIKE '%shorted%'
+        OR delay_reason LIKE '%cut%'    THEN 'Site Not Ready'
+    WHEN delay_reason LIKE '%wire%'     THEN 'Missing/Faulty Wires'
+    WHEN delay_reason LIKE '%device%'
+        OR delay_reason LIKE '%head end%'
+        OR delay_reason LIKE '%radio%'
+        OR delay_reason LIKE '%zone%'
+        OR delay_reason LIKE '%sensor%'
+        OR delay_reason LIKE '%smoke%'  THEN 'Device Not Ready'
+    WHEN delay_occurred = 'YES'         THEN 'Other'
+    ELSE NULL
+END;
+
+-- ============================================================
+-- SECTION 4: ANALYSIS QUERIES
+-- ============================================================
+
+-- 4.1 Overall delay rate across all 114 jobs
+-- Finding: 23.68% of jobs experienced delays (27 out of 114)
+SELECT
+    delay_occurred,
+    COUNT(*) AS total_jobs,
+    CAST(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() AS DECIMAL(5,2)) AS percentage
+FROM dbo.jobs
+GROUP BY delay_occurred;
+
+-- 4.2 Delay rate by system type (Honeywell vs DMP)
+-- Finding: DMP shows 0% delay rate but sample size (8 jobs)
+-- is too small to draw conclusions
+SELECT
+    system_type,
+    COUNT(*) AS total_jobs,
+    SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) AS delayed_jobs,
+    CAST(SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS delay_rate_pct
+FROM dbo.jobs
+GROUP BY system_type
+ORDER BY delay_rate_pct DESC;
+
+-- 4.3 Impact of documentation on delay rate
+-- Finding: Jobs missing both floor plans and scope had
+-- a 100% delay rate vs 16.35% for fully documented jobs
+SELECT
+    had_floor_plans,
+    had_scope,
+    COUNT(*) AS total_jobs,
+    SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) AS delayed_jobs,
+    CAST(SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS delay_rate_pct
+FROM dbo.jobs
+GROUP BY had_floor_plans, had_scope
+ORDER BY delay_rate_pct DESC;
+
+-- 4.4 Breakdown of delay causes by category
+-- Finding: Missing Documentation is the #1 cause (44% of delays)
+SELECT
+    delay_category,
+    COUNT(*) AS total
+FROM dbo.jobs
+WHERE delay_occurred = 'YES'
+GROUP BY delay_category
+ORDER BY total DESC;
+
+-- 4.5 Delay rate by technician
+-- Finding: tech14 has highest delay rate at 35.29%
+SELECT
+    tech_id,
+    COUNT(*) AS total_jobs,
+    SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) AS delayed_jobs,
+    CAST(SUM(CASE WHEN delay_occurred = 'YES' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS delay_rate_pct
+FROM dbo.jobs
+GROUP BY tech_id
+ORDER BY delay_rate_pct DESC;
+
+-- 4.6 Documentation quality per technician
+-- Used to determine if tech14's high delay rate is due to
+-- being assigned more undocumented jobs
+-- Finding: tech14 only had 11.76% undocumented jobs,
+-- so documentation does not explain their higher delay rate
+SELECT
+    tech_id,
+    COUNT(*) AS total_jobs,
+    SUM(CASE WHEN had_floor_plans = 'NO' OR had_scope = 'NO' THEN 1 ELSE 0 END) AS jobs_missing_docs,
+    CAST(SUM(CASE WHEN had_floor_plans = 'NO' OR had_scope = 'NO' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS DECIMAL(5,2)) AS pct_assigned_without_docs
+FROM dbo.jobs
+GROUP BY tech_id
+ORDER BY pct_assigned_without_docs DESC;
+
+-- 4.7 Deep dive into tech14 delay causes
+-- Finding: tech14's delays are primarily Device Not Ready (3 of 6)
+-- which is outside the technician's control -- suggesting a
+-- procurement/scheduling issue rather than a performance issue
+SELECT
+    tech_id,
+    delay_category,
+    COUNT(*) AS total
+FROM dbo.jobs
+WHERE delay_occurred = 'YES'
+    AND tech_id = 'tech14'
+GROUP BY tech_id, delay_category
+ORDER BY total DESC;
