@@ -31,8 +31,18 @@ Implementing a mandatory documentation checklist before job assignment
 could eliminate the majority of preventable delays. Jobs missing both 
 floor plans and scope documents were guaranteed to result in a delay.
 
-### Interactive Dashboard
-[View on Tableau Public](https://public.tableau.com/app/profile/oliver.maria/viz/FieldOperationsDelayAnalysis-AlarmSystemInstallation/Dashboard1#1)
+### Interactive Dashboards
+
+**Dashboard 1 — Operational Overview**
+High-level analysis of delay rates, documentation impact, 
+and top delay causes across 114 jobs.
+
+**Dashboard 2 — Technician Deep Dive**
+Investigates why Tech14 has the highest delay rate, revealing 
+Device Not Ready issues as the primary driver rather than 
+documentation gaps or performance problems.
+
+[View Both Dashboards on Tableau Public](https://public.tableau.com/app/profile/oliver.maria/viz/FieldOperationsDelayAnalysis-AlarmSystemInstallation/Dashboard1#1)
 
 ### SQL Queries
 All analysis queries are saved in `fieldops_analysis.sql` in this 
