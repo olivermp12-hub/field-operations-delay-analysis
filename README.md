@@ -147,4 +147,4 @@ Investigates why Tech14 has the highest delay rate, revealing Device Not Ready i
 
 This project was designed, built, and analyzed independently — not as part of a formal role, but as a self-initiated effort to apply data analysis to real operational problems observed over 8 years in the field. The goal was to answer a question no one was asking but everyone was feeling: *why do so many jobs run into the same problems, and what does the data actually say about it?*
 
-**Connect:** [LinkedIn](https://www.linkedin.com/in/oliver-maria) | [Tableau Public](https://public.tableau.com/app/profile/oliver.maria)
+**Connect:** [LinkedIn](https://www.linkedin.com/in/oliver-maria-071707355) | [Tableau Public](https://public.tableau.com/app/profile/oliver.maria)
