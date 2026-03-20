@@ -3,12 +3,12 @@
 ## Alarm System Installation — Communication Gap Case Study
 
 > Built from 8 years of firsthand experience as an alarm systems field technician, this analysis identifies the operational patterns that cause installation delays — patterns invisible to analysts who have never been on a jobsite. All data has been anonymized and restructured to protect company and client confidentiality while preserving accurate operational patterns.
-
+Pipeline status: Google Sheets → BigQuery ingestion live and running on 104 rows of operational data.
 ---
 
 ## Overview
 
-Analysis of 114 field installation jobs to identify the root causes of operational delays in alarm system installations. Using SQL for data transformation and analysis and Tableau for visualization, this project surfaces a clear, actionable finding: **documentation failures — not technician performance — are the primary driver of preventable delays.**
+Analysis of 104 field installation jobs to identify the root causes of operational delays in alarm system installations. Using SQL for data transformation and analysis and Tableau for visualization, this project surfaces a clear, actionable finding: **documentation failures — not technician performance — are the primary driver of preventable delays.**
 
 This project is also the foundation of a larger analytics pipeline currently in development, ingesting live operational data into BigQuery with dbt transformations and automated Tableau reporting.
 
